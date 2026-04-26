@@ -368,6 +368,37 @@ export default function AttendancePage() {
         </div>
       )}
 
+      {/* All events this month */}
+      {events.length > 0 && (
+        <div className="mb-5">
+          <h2 className="text-sm font-semibold text-white/50 mb-3 flex items-center gap-2">
+            <span>Events in {format(viewMonth, 'MMMM')}</span>
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(108,93,211,0.2)', color: '#A87EFF' }}>{events.length}</span>
+          </h2>
+          <div className="flex flex-col gap-2">
+            {[...events].sort((a, b) => a.date.localeCompare(b.date)).map(evt => (
+              <div key={evt.id} className="card rounded-2xl px-4 py-3 flex items-center gap-3">
+                <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ background: evt.color }} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold truncate">{evt.title}</p>
+                  </div>
+                  <p className="text-xs text-white/30 mt-0.5">{format(new Date(evt.date + 'T12:00:00'), 'EEE, d MMM')}</p>
+                  {evt.description && <p className="text-xs text-white/40 mt-0.5 truncate">{evt.description}</p>}
+                </div>
+                <button
+                  onClick={() => deleteEvent(evt.id)}
+                  className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center"
+                  style={{ background: 'rgba(239,68,68,0.1)' }}
+                >
+                  <X size={12} className="text-red-400" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 mb-2">
         <div className="card rounded-2xl p-4">

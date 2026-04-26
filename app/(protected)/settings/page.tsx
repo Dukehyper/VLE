@@ -105,6 +105,38 @@ export default function SettingsPage() {
     router.push('/login')
   }
 
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<'all' | 'finance' | 'attendance' | 'patients' | 'content' | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleDeleteData(target: 'all' | 'finance' | 'attendance' | 'patients' | 'content') {
+    setDeleting(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const uid = user.id
+    if (target === 'all' || target === 'finance') {
+      await supabase.from('income_entries').delete().eq('user_id', uid)
+      await supabase.from('expenses').delete().eq('user_id', uid)
+      await supabase.from('pot_transactions').delete().eq('user_id', uid)
+      await supabase.from('saving_pots').delete().eq('user_id', uid)
+    }
+    if (target === 'all' || target === 'attendance') {
+      await supabase.from('attendance').delete().eq('user_id', uid)
+      await supabase.from('calendar_events').delete().eq('user_id', uid)
+    }
+    if (target === 'all' || target === 'patients') {
+      await supabase.from('patient_visits').delete().eq('user_id', uid)
+    }
+    if (target === 'all' || target === 'content') {
+      await supabase.from('content_items').delete().eq('user_id', uid)
+    }
+    setDeleting(false)
+    setDeleteConfirm(false)
+    setDeleteTarget(null)
+    alert('Data deleted successfully.')
+  }
+
   const displayAvatar = avatarPreview ?? avatarUrl
 
   return (
@@ -201,14 +233,72 @@ export default function SettingsPage() {
       </form>
 
       {!isFirstTime && (
-        <div className="mt-8 pb-8">
+        <div className="mt-8 pb-2">
           <button
             onClick={handleLogout}
-            className="w-full py-3.5 rounded-2xl text-red-400 text-sm font-semibold"
+            className="w-full py-3.5 rounded-2xl text-red-400 text-sm font-semibold mb-6"
             style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}
           >
             Sign out
           </button>
+
+          {/* Danger Zone */}
+          <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(239,68,68,0.2)' }}>
+            <div className="px-4 py-3" style={{ background: 'rgba(239,68,68,0.07)' }}>
+              <p className="text-xs font-bold text-red-400 uppercase tracking-widest">Danger Zone</p>
+            </div>
+            <div className="px-4 py-3 flex flex-col gap-2">
+              {[
+                { key: 'attendance', label: 'Clear attendance & events' },
+                { key: 'finance', label: 'Clear all finance data' },
+                { key: 'patients', label: 'Clear patient records' },
+                { key: 'content', label: 'Clear saved content' },
+                { key: 'all', label: 'Delete ALL my data' },
+              ].map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => { setDeleteTarget(key as typeof deleteTarget); setDeleteConfirm(true) }}
+                  className="text-left py-2 px-3 rounded-xl text-sm transition-all"
+                  style={{ background: key === 'all' ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.04)', color: key === 'all' ? '#f87171' : 'rgba(244,241,248,0.5)' }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Confirm dialog */}
+          {deleteConfirm && deleteTarget && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center px-6" style={{ background: 'rgba(0,0,0,0.7)' }}>
+              <div className="w-full max-w-sm rounded-3xl p-6" style={{ background: '#1e0842', border: '1px solid rgba(239,68,68,0.3)' }}>
+                <p className="text-base font-bold mb-2">Are you sure?</p>
+                <p className="text-sm text-white/50 mb-6">
+                  {deleteTarget === 'all'
+                    ? 'This will permanently delete ALL your data. This cannot be undone.'
+                    : `This will permanently delete your ${deleteTarget} data. This cannot be undone.`}
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setDeleteConfirm(false); setDeleteTarget(null) }}
+                    className="flex-1 py-3 rounded-xl text-sm font-semibold text-white/50"
+                    style={{ background: 'rgba(255,255,255,0.07)' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDeleteData(deleteTarget)}
+                    disabled={deleting}
+                    className="flex-1 py-3 rounded-xl text-sm font-bold text-white"
+                    style={{ background: '#ef4444' }}
+                  >
+                    {deleting ? 'Deleting…' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="h-8" />
         </div>
       )}
     </div>

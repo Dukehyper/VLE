@@ -251,6 +251,86 @@ export default function DashboardPage() {
         )}
       </div>
 
+      {/* Insights */}
+      <div className="mb-5">
+        <h2 className="text-sm font-semibold text-white/60 mb-3">Insights</h2>
+        {loading ? (
+          <div className="skeleton h-28 rounded-2xl" />
+        ) : (
+          <div
+            className="rounded-2xl p-4"
+            style={{ background: 'rgba(108,93,211,0.08)', border: '1px solid rgba(108,93,211,0.18)' }}
+          >
+            {/* Month headline */}
+            <p className="text-xs text-white/40 mb-3 font-medium">
+              {MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}
+            </p>
+            {monthData.income === 0 && monthData.expenses === 0 ? (
+              <p className="text-sm text-white/30">No data for this month yet.</p>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {/* Earning line */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">You earned</span>
+                  <span className="text-sm font-bold text-green-400">{formatMoney(monthData.income, currency)}</span>
+                </div>
+                {/* Spending line */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">You spent</span>
+                  <span className="text-sm font-bold text-red-400">{formatMoney(monthData.expenses, currency)}</span>
+                </div>
+                {/* Divider */}
+                <div className="h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+                {/* Net */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">
+                    {net >= 0 ? '💚 You saved' : '🔴 You overspent by'}
+                  </span>
+                  <span className={`text-sm font-black ${net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {formatMoney(Math.abs(net), currency)}
+                  </span>
+                </div>
+                {/* Savings rate */}
+                {monthData.income > 0 && (
+                  <div>
+                    <div className="flex justify-between text-xs text-white/30 mb-1">
+                      <span>Savings rate</span>
+                      <span>{Math.max(0, Math.round((net / monthData.income) * 100))}%</span>
+                    </div>
+                    <div className="progress-track h-1.5">
+                      <div
+                        className="h-1.5 rounded-full transition-all duration-700"
+                        style={{
+                          width: `${Math.max(0, Math.min(100, (net / monthData.income) * 100))}%`,
+                          background: net >= 0 ? 'linear-gradient(90deg,#4ade80,#16a34a)' : '#ef4444',
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {/* Extra stats */}
+                <div className="flex gap-4 pt-1">
+                  <div className="text-center flex-1">
+                    <p className="text-lg font-bold">{monthData.daysWorked}</p>
+                    <p className="text-[10px] text-white/30">days worked</p>
+                  </div>
+                  <div className="w-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+                  <div className="text-center flex-1">
+                    <p className="text-lg font-bold text-accent">{monthData.patients}</p>
+                    <p className="text-[10px] text-white/30">patients</p>
+                  </div>
+                  <div className="w-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+                  <div className="text-center flex-1">
+                    <p className="text-lg font-bold">{formatMoney(monthData.hvIncome, currency)}</p>
+                    <p className="text-[10px] text-white/30">home visits</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Saving Pots */}
       {pots.length > 0 && (
         <div className="mb-6">
