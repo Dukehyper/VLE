@@ -7,16 +7,16 @@ interface Settings {
   currency: string
   currencySymbol: string
   leave_allowance: number
-  day_off: string
   display_name: string | null
+  avatar_url: string | null
 }
 
 const defaultSettings: Settings = {
   currency: 'GBP',
   currencySymbol: '£',
   leave_allowance: 20,
-  day_off: 'Sunday',
   display_name: null,
+  avatar_url: null,
 }
 
 const SettingsContext = createContext<Settings>(defaultSettings)
@@ -39,8 +39,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
               currency: data.currency,
               currencySymbol: CURRENCY_SYMBOLS[data.currency] ?? '£',
               leave_allowance: data.leave_allowance,
-              day_off: data.day_off,
               display_name: data.display_name,
+              avatar_url: data.avatar_url ?? null,
             })
           }
         })

@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 import { Zap } from 'lucide-react'
 
 export default function LoginPage() {
@@ -56,6 +57,10 @@ export default function LoginPage() {
         </div>
         <span className="text-2xl font-bold tracking-tight">Pulse</span>
       </div>
+
+      <Link href="/onboarding" className="text-xs text-white/25 mb-4 hover:text-white/50 transition-colors">
+        See what Pulse can do →
+      </Link>
 
       <div className="w-full">
         {/* Mode switcher */}
