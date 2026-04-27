@@ -1,6 +1,5 @@
 'use client'
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createContext, useContext, ReactNode } from 'react'
 import { CURRENCY_SYMBOLS } from '@/lib/utils'
 
 interface Settings {
@@ -21,33 +20,25 @@ const defaultSettings: Settings = {
 
 const SettingsContext = createContext<Settings>(defaultSettings)
 
-export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(defaultSettings)
+interface SettingsRow {
+  currency: string
+  leave_allowance: number
+  display_name: string | null
+  avatar_url: string | null
+}
 
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase
-        .from('settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-        .then(({ data }) => {
-          if (data) {
-            setSettings({
-              currency: data.currency,
-              currencySymbol: CURRENCY_SYMBOLS[data.currency] ?? '£',
-              leave_allowance: data.leave_allowance,
-              display_name: data.display_name,
-              avatar_url: data.avatar_url ?? null,
-            })
-          }
-        })
-    })
-  }, [])
+export function SettingsProvider({ children, initialSettings }: { children: ReactNode; initialSettings?: SettingsRow | null }) {
+  const value: Settings = initialSettings
+    ? {
+        currency: initialSettings.currency,
+        currencySymbol: CURRENCY_SYMBOLS[initialSettings.currency] ?? '£',
+        leave_allowance: initialSettings.leave_allowance,
+        display_name: initialSettings.display_name,
+        avatar_url: initialSettings.avatar_url ?? null,
+      }
+    : defaultSettings
 
-  return <SettingsContext.Provider value={settings}>{children}</SettingsContext.Provider>
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>
 }
 
 export const useSettings = () => useContext(SettingsContext)

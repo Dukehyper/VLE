@@ -69,7 +69,8 @@ function FinanceInner() {
 
   const load = useCallback(async () => {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const [i, e, p] = await Promise.all([
       supabase.from('income_entries').select('*').eq('user_id', user.id).order('year', { ascending: false }).order('month', { ascending: false }),
@@ -117,7 +118,8 @@ function FinanceInner() {
     e.preventDefault(); setError('')
     setIncSaving(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const { error: err } = await supabase.from('income_entries').upsert({
       user_id: user.id, month: incMonth, year: incYear,
@@ -134,7 +136,8 @@ function FinanceInner() {
     if (!expAmount || !expDesc) { setError('Fill all fields'); return }
     setExpSaving(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const { error: err } = await supabase.from('expenses').insert({
       user_id: user.id, amount: parseFloat(expAmount), description: expDesc,
@@ -156,7 +159,8 @@ function FinanceInner() {
     if (!potName || !potTarget) { setError('Fill all fields'); return }
     setPotSaving(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     await supabase.from('saving_pots').insert({
       user_id: user.id, name: potName, target_amount: parseFloat(potTarget), current_amount: 0,
@@ -170,7 +174,8 @@ function FinanceInner() {
     if (!selectedPot || !txAmount) return
     setTxSaving(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const amt = parseFloat(txAmount)
 

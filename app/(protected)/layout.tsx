@@ -12,7 +12,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   const { data: settings } = await supabase
     .from('settings')
-    .select('id')
+    .select('id, currency, leave_allowance, display_name, avatar_url')
     .eq('user_id', user.id)
     .single()
 
@@ -24,7 +24,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   }
 
   return (
-    <SettingsProvider>
+    <SettingsProvider initialSettings={settings}>
       <SessionGuard />
       <div className="pb-24 page-enter">
         {children}

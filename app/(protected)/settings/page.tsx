@@ -30,7 +30,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const user = session?.user
       if (!user) return
       setUserId(user.id)
       supabase
@@ -112,7 +113,8 @@ export default function SettingsPage() {
   async function handleDeleteData(target: 'all' | 'finance' | 'attendance' | 'patients' | 'content') {
     setDeleting(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const uid = user.id
     if (target === 'all' || target === 'finance') {

@@ -35,7 +35,8 @@ export default function PatientsPage() {
 
   const load = useCallback(async () => {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const mStart = format(startOfMonth(viewMonth), 'yyyy-MM-dd')
     const mEnd = format(endOfMonth(viewMonth), 'yyyy-MM-dd')
@@ -61,7 +62,8 @@ export default function PatientsPage() {
   async function saveEntry() {
     setEntrySaving(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     await supabase.from('patient_visits').upsert({ user_id: user.id, date: entryDate, count: entryCount, notes: entryNote.trim() || null }, { onConflict: 'user_id,date' })
     setEntrySaving(false)

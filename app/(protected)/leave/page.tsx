@@ -27,7 +27,8 @@ export default function LeavePage() {
 
   const load = useCallback(async () => {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const { data } = await supabase
       .from('attendance')
@@ -52,7 +53,8 @@ export default function LeavePage() {
     setError('')
 
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
 
     const days = eachDayOfInterval({ start: parseISO(startDate), end: parseISO(endDate) })

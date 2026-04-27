@@ -52,7 +52,8 @@ export default function ContentPage() {
 
   const load = useCallback(async () => {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const { data } = await supabase.from('content_items').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
     setItems(data ?? [])
@@ -72,7 +73,8 @@ export default function ContentPage() {
     setSaving(true)
     const thumbnail = validUrl ? await fetchYouTubeThumbnail(validUrl) : null
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const { error: err } = await supabase.from('content_items').insert({
       user_id: user.id,

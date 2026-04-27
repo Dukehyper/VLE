@@ -41,7 +41,8 @@ export default function DashboardPage() {
 
   const load = useCallback(async () => {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
 
     const monthStart = format(startOfMonth(viewMonth), 'yyyy-MM-dd')
@@ -89,7 +90,8 @@ export default function DashboardPage() {
   async function handleClockToggle() {
     setClockLoading(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const today = todayISO()
     const now = new Date().toISOString()

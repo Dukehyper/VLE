@@ -65,7 +65,8 @@ export default function AttendancePage() {
 
   const load = useCallback(async () => {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const mStart = format(startOfMonth(viewMonth), 'yyyy-MM-dd')
     const mEnd = format(endOfMonth(viewMonth), 'yyyy-MM-dd')
@@ -85,7 +86,8 @@ export default function AttendancePage() {
   async function clockToggle() {
     setActionLoading(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const now = new Date().toISOString()
     if (!today?.clocked_in_at) {
@@ -98,7 +100,8 @@ export default function AttendancePage() {
 
   async function saveEditedTodayTime() {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const base = todayStr + 'T'
     const inISO = editInTime ? base + editInTime + ':00' : today?.clocked_in_at
@@ -118,7 +121,8 @@ export default function AttendancePage() {
   async function markStatus(date: string, status: 'leave' | 'day_off' | null) {
     setActionLoading(true)
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     if (status === null) {
       await supabase.from('attendance').delete().eq('user_id', user.id).eq('date', date)
@@ -131,7 +135,8 @@ export default function AttendancePage() {
   async function addEvent() {
     if (!eventTitle.trim() || !selectedDay) return
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     await supabase.from('calendar_events').insert({ user_id: user.id, date: selectedDay, title: eventTitle.trim(), description: eventDesc.trim() || null, color: eventColor })
     setEventTitle(''); setEventDesc(''); setShowAddEvent(false); load()
@@ -146,7 +151,8 @@ export default function AttendancePage() {
   async function saveDayClockEdit() {
     if (!selectedDay) return
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) return
     const base = selectedDay + 'T'
     await supabase.from('attendance').upsert({ user_id: user.id, date: selectedDay, clocked_in_at: clockInTime ? base + clockInTime + ':00' : null, clocked_out_at: clockOutTime ? base + clockOutTime + ':00' : null, status: 'working' }, { onConflict: 'user_id,date' })
