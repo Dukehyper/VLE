@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import BottomNav from '@/components/BottomNav'
 import { SettingsProvider } from '@/components/SettingsContext'
+import SessionGuard from '@/components/SessionGuard'
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -17,14 +18,14 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   const headersList = await headers()
   const pathname = headersList.get('x-pathname') ?? ''
-  const isSettingsPage = pathname.includes('/settings')
 
-  if (!settings && !isSettingsPage) {
+  if (!settings && !pathname.includes('/settings')) {
     redirect('/settings')
   }
 
   return (
     <SettingsProvider>
+      <SessionGuard />
       <div className="pb-24 page-enter">
         {children}
       </div>

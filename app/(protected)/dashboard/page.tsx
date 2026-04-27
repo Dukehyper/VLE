@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useSettings } from '@/components/SettingsContext'
-import { formatMoney, getGreeting, formatDate, todayISO, MONTHS } from '@/lib/utils'
+import { formatMoney, getGreeting, todayISO } from '@/lib/utils'
+import { useDateFormat } from '@/lib/hooks/useDateFormat'
 import { Settings, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Clock, Wallet, UserPlus } from 'lucide-react'
 import Image from 'next/image'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
@@ -28,6 +29,7 @@ interface Pot {
 
 export default function DashboardPage() {
   const { currencySymbol, currency, display_name, avatar_url } = useSettings()
+  const { fmtDate, fmtCalHeader, fmtIncomeMonth } = useDateFormat()
   const [clockedIn, setClockedIn] = useState(false)
   const [clockLoading, setClockLoading] = useState(false)
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([])
@@ -172,7 +174,7 @@ export default function DashboardPage() {
             <ChevronLeft size={14} />
           </button>
           <span className="text-xs font-semibold min-w-[80px] text-center">
-            {MONTHS[viewMonth.getMonth()].slice(0, 3)} {viewMonth.getFullYear()}
+            {fmtCalHeader(viewMonth)}
           </span>
           <button
             onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))}
@@ -242,7 +244,7 @@ export default function DashboardPage() {
               <div key={exp.id} className="card rounded-2xl px-4 py-3 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">{exp.description}</p>
-                  <p className="text-xs text-white/30 mt-0.5">{formatDate(exp.date)}</p>
+                  <p className="text-xs text-white/30 mt-0.5">{fmtDate(exp.date)}</p>
                 </div>
                 <span className="text-red-400 font-semibold text-sm">-{formatMoney(exp.amount, currency)}</span>
               </div>
@@ -263,7 +265,7 @@ export default function DashboardPage() {
           >
             {/* Month headline */}
             <p className="text-xs text-white/40 mb-3 font-medium">
-              {MONTHS[viewMonth.getMonth()]} {viewMonth.getFullYear()}
+              {fmtIncomeMonth(viewMonth.getMonth() + 1, viewMonth.getFullYear())}
             </p>
             {monthData.income === 0 && monthData.expenses === 0 ? (
               <p className="text-sm text-white/30">No data for this month yet.</p>

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { todayISO, formatDate } from '@/lib/utils'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns'
 import { Plus, Minus, UserPlus, Edit2, Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useDateFormat } from '@/lib/hooks/useDateFormat'
 
 interface Visit {
   id: string; date: string; count: number; notes: string | null
@@ -30,6 +31,7 @@ export default function PatientsPage() {
   const [editSaving, setEditSaving] = useState(false)
 
   const todayStr = todayISO()
+  const { fmtDate, fmtDayNum, fmtCalHeader } = useDateFormat()
 
   const load = useCallback(async () => {
     const supabase = createClient()
@@ -166,7 +168,7 @@ export default function PatientsPage() {
           <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
             <ChevronLeft size={13} />
           </button>
-          <span className="text-xs font-semibold">{format(viewMonth, 'MMM yy')}</span>
+          <span className="text-xs font-semibold">{fmtCalHeader(viewMonth)}</span>
           <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} disabled={isCurrentMonth} className="w-7 h-7 rounded-lg flex items-center justify-center disabled:opacity-30" style={{ background: 'rgba(255,255,255,0.07)' }}>
             <ChevronRight size={13} />
           </button>
@@ -195,7 +197,7 @@ export default function PatientsPage() {
                     border: entryDate === ds ? '1px solid #6C5DD3' : isToday ? '1px solid rgba(108,93,211,0.3)' : '1px solid transparent',
                   }}
                 >
-                  <span className="text-[10px] text-white/40">{format(d, 'd')}</span>
+                  <span className="text-[10px] text-white/40">{fmtDayNum(d)}</span>
                   {count > 0 && <span className="text-[9px] font-bold text-accent leading-none">{count}</span>}
                 </button>
               )
@@ -218,7 +220,7 @@ export default function PatientsPage() {
                   /* Edit mode */
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-xs text-white/40 flex-shrink-0">{formatDate(v.date)}</span>
+                      <span className="text-xs text-white/40 flex-shrink-0">{fmtDate(v.date)}</span>
                       <input type="number" min={0} value={editCount} onChange={e => setEditCount(parseInt(e.target.value) || 0)} className="input text-sm w-20 text-center font-bold" />
                     </div>
                     <input className="input text-sm mb-2" placeholder="Notes…" value={editNote} onChange={e => setEditNote(e.target.value)} />
@@ -235,7 +237,7 @@ export default function PatientsPage() {
                   /* View mode */
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold">{formatDate(v.date)}</p>
+                      <p className="text-sm font-semibold">{fmtDate(v.date)}</p>
                       {v.notes && <p className="text-xs text-white/30 mt-0.5">{v.notes}</p>}
                     </div>
                     <div className="flex items-center gap-3">

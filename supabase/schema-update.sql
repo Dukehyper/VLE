@@ -5,8 +5,10 @@ ALTER TABLE settings ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE settings ALTER COLUMN day_off DROP NOT NULL;
 ALTER TABLE settings ALTER COLUMN day_off SET DEFAULT NULL;
 
--- 2. Add category to content_items
+-- 2. Add category to content_items, make url optional, add title
 ALTER TABLE content_items ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'uncategorized';
+ALTER TABLE content_items ADD COLUMN IF NOT EXISTS title TEXT;
+ALTER TABLE content_items ALTER COLUMN url DROP NOT NULL;
 
 -- 3. Calendar events table
 CREATE TABLE IF NOT EXISTS calendar_events (

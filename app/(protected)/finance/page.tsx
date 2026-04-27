@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useSettings } from '@/components/SettingsContext'
-import { formatMoney, formatDate, MONTHS } from '@/lib/utils'
+import { formatMoney, MONTHS } from '@/lib/utils'
+import { useDateFormat } from '@/lib/hooks/useDateFormat'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Plus, Trash2, ChevronRight, PiggyBank, X } from 'lucide-react'
 import { format } from 'date-fns'
@@ -28,6 +29,7 @@ function FinanceInner() {
   const sp = useSearchParams()
   const router = useRouter()
   const { currency } = useSettings()
+  const { fmtDate, fmtIncomeMonth, fmtMonthShort } = useDateFormat()
   const [tab, setTab] = useState<Tab>((sp.get('tab') as Tab) ?? 'overview')
   const [incomes, setIncomes] = useState<Income[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -105,7 +107,7 @@ function FinanceInner() {
     const m = d.getMonth() + 1, y = d.getFullYear()
     const inc = incomes.find(e => e.month === m && e.year === y)
     return {
-      name: MONTHS[m - 1].slice(0, 3),
+      name: fmtMonthShort(m, y),
       Salary: Number(inc?.salary_amount ?? 0),
       'Home Visits': Number(inc?.home_visits_amount ?? 0),
     }
@@ -320,7 +322,7 @@ function FinanceInner() {
               incomes.map(inc => (
                 <div key={inc.id} className="card rounded-2xl px-4 py-3">
                   <div className="flex justify-between items-start">
-                    <p className="text-sm font-semibold">{MONTHS[inc.month - 1]} {inc.year}</p>
+                    <p className="text-sm font-semibold">{fmtIncomeMonth(inc.month, inc.year)}</p>
                     <p className="text-sm font-bold text-green-400">{formatMoney(Number(inc.salary_amount) + Number(inc.home_visits_amount), currency)}</p>
                   </div>
                   <div className="flex gap-4 mt-1">
@@ -374,7 +376,7 @@ function FinanceInner() {
             return (
               <div key={month} className="mb-4">
                 <div className="flex justify-between text-xs text-white/40 mb-2">
-                  <span className="font-semibold">{MONTHS[m - 1]} {y}</span>
+                  <span className="font-semibold">{fmtIncomeMonth(m, y)}</span>
                   <span className="text-red-400">-{formatMoney(total, currency)}</span>
                 </div>
                 <div className="flex flex-col gap-2">
@@ -382,7 +384,7 @@ function FinanceInner() {
                     <div key={exp.id} className="card rounded-2xl px-4 py-3 flex justify-between items-center">
                       <div>
                         <p className="text-sm font-medium">{exp.description}</p>
-                        <p className="text-xs text-white/30 mt-0.5">{formatDate(exp.date)} · {exp.source === 'salary' ? 'Salary' : 'Home Visits'}</p>
+                        <p className="text-xs text-white/30 mt-0.5">{fmtDate(exp.date)} · {exp.source === 'salary' ? 'Salary' : 'Home Visits'}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-red-400 text-sm font-semibold">-{formatMoney(exp.amount, currency)}</span>
@@ -460,7 +462,7 @@ function FinanceInner() {
                         <span className={`text-xs font-semibold ${tx.type === 'deposit' ? 'text-green-400' : 'text-red-400'}`}>
                           {tx.type === 'deposit' ? '+' : '-'}{formatMoney(tx.amount, currency)}
                         </span>
-                        <p className="text-xs text-white/30">{formatDate(tx.date)} · {tx.source === 'salary' ? 'Salary' : 'HV'}</p>
+                        <p className="text-xs text-white/30">{fmtDate(tx.date)} · {tx.source === 'salary' ? 'Salary' : 'HV'}</p>
                       </div>
                     </div>
                   ))}

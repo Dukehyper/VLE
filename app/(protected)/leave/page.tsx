@@ -5,6 +5,7 @@ import { useSettings } from '@/components/SettingsContext'
 import { formatDate } from '@/lib/utils'
 import { format, eachDayOfInterval, parseISO } from 'date-fns'
 import { Plus, X, Calendar } from 'lucide-react'
+import { useDateFormat } from '@/lib/hooks/useDateFormat'
 
 interface LeaveRecord {
   id: string
@@ -14,6 +15,7 @@ interface LeaveRecord {
 
 export default function LeavePage() {
   const { leave_allowance } = useSettings()
+  const { fmtDate } = useDateFormat()
   const [leaveRecords, setLeaveRecords] = useState<LeaveRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
@@ -169,7 +171,7 @@ export default function LeavePage() {
           {leaveRecords.map(r => (
             <div key={r.id} className="card rounded-2xl px-4 py-3 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">{formatDate(r.date)}</p>
+                <p className="text-sm font-medium">{fmtDate(r.date)}</p>
                 {r.notes && <p className="text-xs text-white/30 mt-0.5">{r.notes}</p>}
               </div>
               <button onClick={() => deleteLeave(r.id)} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.1)' }}>
