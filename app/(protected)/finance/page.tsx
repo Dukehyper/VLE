@@ -29,7 +29,7 @@ function FinanceInner() {
   const sp = useSearchParams()
   const router = useRouter()
   const { currency } = useSettings()
-  const { fmtDate, fmtIncomeMonth, fmtMonthShort } = useDateFormat()
+  const { fmtDate, fmtIncomeMonth, fmtMonthShort, isBS } = useDateFormat()
   const [tab, setTab] = useState<Tab>((sp.get('tab') as Tab) ?? 'overview')
   const [incomes, setIncomes] = useState<Income[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -64,6 +64,8 @@ function FinanceInner() {
   const [showPotForm, setShowPotForm] = useState(false)
   const [showIncForm, setShowIncForm] = useState(false)
   const [showExpForm, setShowExpForm] = useState(false)
+  const [editingPotName, setEditingPotName] = useState(false)
+  const [newPotName, setNewPotName] = useState('')
 
   const [error, setError] = useState('')
 
@@ -167,6 +169,15 @@ function FinanceInner() {
     })
     setPotSaving(false)
     setPotName(''); setPotTarget(''); setShowPotForm(false); load()
+  }
+
+  async function renamePot() {
+    if (!selectedPot || !newPotName.trim()) return
+    const supabase = createClient()
+    await supabase.from('saving_pots').update({ name: newPotName.trim() }).eq('id', selectedPot.id)
+    setSelectedPot({ ...selectedPot, name: newPotName.trim() })
+    setEditingPotName(false)
+    load()
   }
 
   async function potTransaction(e: React.FormEvent) {
@@ -295,7 +306,11 @@ function FinanceInner() {
                   <div>
                     <label className="text-xs text-white/40 mb-1 block">Month</label>
                     <select className="input text-sm" value={incMonth} onChange={e => setIncMonth(+e.target.value)}>
-                      {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                      {MONTHS.map((m, i) => (
+                        <option key={i} value={i + 1}>
+                          {isBS ? fmtIncomeMonth(i + 1, incYear) : m}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div>
@@ -436,8 +451,27 @@ function FinanceInner() {
             <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
               <div className="w-full max-w-mobile rounded-t-3xl p-5 pb-10" style={{ background: '#230550' }}>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold">{selectedPot.name}</h3>
-                  <button onClick={() => setSelectedPot(null)}><X size={18} /></button>
+                  {editingPotName ? (
+                    <div className="flex items-center gap-2 flex-1 mr-2">
+                      <input
+                        className="input text-sm flex-1"
+                        value={newPotName}
+                        onChange={e => setNewPotName(e.target.value)}
+                        autoFocus
+                        onKeyDown={e => { if (e.key === 'Enter') renamePot() }}
+                      />
+                      <button onClick={renamePot} className="text-xs font-bold text-accent px-2">Save</button>
+                      <button onClick={() => setEditingPotName(false)} className="text-xs text-white/30 px-1">✕</button>
+                    </div>
+                  ) : (
+                    <button
+                      className="font-bold text-left"
+                      onClick={() => { setNewPotName(selectedPot.name); setEditingPotName(true) }}
+                    >
+                      {selectedPot.name} <span className="text-xs text-white/30 font-normal">edit</span>
+                    </button>
+                  )}
+                  {!editingPotName && <button onClick={() => { setSelectedPot(null); setEditingPotName(false) }}><X size={18} /></button>}
                 </div>
                 <p className="text-xs text-white/40 mb-4">
                   {formatMoney(selectedPot.current_amount, currency)} saved / {formatMoney(selectedPot.target_amount, currency)} goal

@@ -104,8 +104,8 @@ export default function AttendancePage() {
     const user = session?.user
     if (!user) return
     const base = todayStr + 'T'
-    const inISO = editInTime ? base + editInTime + ':00' : today?.clocked_in_at
-    const outISO = editOutTime ? base + editOutTime + ':00' : today?.clocked_out_at
+    const inISO = editInTime ? new Date(base + editInTime + ':00').toISOString() : today?.clocked_in_at
+    const outISO = editOutTime ? new Date(base + editOutTime + ':00').toISOString() : today?.clocked_out_at
     await supabase.from('attendance').upsert({ user_id: user.id, date: todayStr, clocked_in_at: inISO, clocked_out_at: outISO, status: 'working' }, { onConflict: 'user_id,date' })
     setEditingTodayClock(false)
     setTimeEdited(true)
@@ -155,7 +155,7 @@ export default function AttendancePage() {
     const user = session?.user
     if (!user) return
     const base = selectedDay + 'T'
-    await supabase.from('attendance').upsert({ user_id: user.id, date: selectedDay, clocked_in_at: clockInTime ? base + clockInTime + ':00' : null, clocked_out_at: clockOutTime ? base + clockOutTime + ':00' : null, status: 'working' }, { onConflict: 'user_id,date' })
+    await supabase.from('attendance').upsert({ user_id: user.id, date: selectedDay, clocked_in_at: clockInTime ? new Date(base + clockInTime + ':00').toISOString() : null, clocked_out_at: clockOutTime ? new Date(base + clockOutTime + ':00').toISOString() : null, status: 'working' }, { onConflict: 'user_id,date' })
     setShowClockEdit(false); load()
   }
 
@@ -272,14 +272,21 @@ export default function AttendancePage() {
         )}
 
         {/* Clock button */}
-        {(!today?.status || today.status === 'working') && !editingTodayClock && (
+        {!editingTodayClock && (
           <button
             onClick={clockToggle}
-            disabled={actionLoading || !!today?.clocked_out_at}
-            className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-98 ${isClockedIn ? 'bg-red-500/80 text-white' : today?.clocked_out_at ? 'bg-white/07 text-white/30' : 'text-white'}`}
-            style={!isClockedIn && !today?.clocked_out_at ? { background: 'linear-gradient(135deg,#4ade80,#16a34a)', boxShadow: '0 4px 20px rgba(74,222,128,0.25)' } : {}}
+            disabled={actionLoading || !!today?.clocked_out_at || (!!today?.status && today.status !== 'working')}
+            className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-40 ${isClockedIn ? 'bg-red-500/80 text-white' : 'text-white'}`}
+            style={!isClockedIn && !today?.clocked_out_at && today?.status !== 'leave' && today?.status !== 'day_off'
+              ? { background: 'linear-gradient(135deg,#4ade80,#16a34a)', boxShadow: '0 4px 20px rgba(74,222,128,0.25)' }
+              : isClockedIn ? {} : { background: 'rgba(255,255,255,0.06)' }}
           >
-            {actionLoading ? '…' : isClockedIn ? 'Clock Out' : today?.clocked_out_at ? 'Clocked out for today' : 'Clock In'}
+            {actionLoading ? '…'
+              : isClockedIn ? 'Clock Out'
+              : today?.clocked_out_at ? 'Clocked out for today'
+              : today?.status === 'leave' ? 'On leave today'
+              : today?.status === 'day_off' ? 'Day off today'
+              : 'Clock In'}
           </button>
         )}
 
