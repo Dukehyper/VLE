@@ -1,9 +1,13 @@
 'use client'
 import { useSettings } from '@/components/SettingsContext'
 import { formatDate } from '@/lib/utils'
-import { formatBS, bsMonthHeader, bsMonthLabel, toBSParts, BS_MONTHS, BS_MONTHS_SHORT } from '@/lib/nepali-date'
+import {
+  formatBS, bsMonthHeader, bsMonthLabel, toBSParts,
+  bsMonthStartGreg, bsMonthEndGreg, bsMonthShiftGreg, isSameBSMonth,
+  BS_MONTHS, BS_MONTHS_SHORT,
+} from '@/lib/nepali-date'
 import { MONTHS } from '@/lib/utils'
-import { format } from 'date-fns'
+import { format, startOfMonth, endOfMonth, isSameMonth as gregIsSameMonth } from 'date-fns'
 
 export function useDateFormat() {
   const { currency } = useSettings()
@@ -33,5 +37,21 @@ export function useDateFormat() {
       if (!isBS) return MONTHS[month - 1].slice(0, 3)
       return bsMonthLabel(month, year).split(' ')[0].slice(0, 3)
     },
+
+    /** Gregorian Date for the first day of the current month (BS or Gregorian) */
+    monthStart: (date: Date): Date =>
+      isBS ? bsMonthStartGreg(date) : startOfMonth(date),
+
+    /** Gregorian Date for the last day of the current month (BS or Gregorian) */
+    monthEnd: (date: Date): Date =>
+      isBS ? bsMonthEndGreg(date) : endOfMonth(date),
+
+    /** Shift by N months (BS or Gregorian) — returns a Date inside the new month */
+    monthShift: (date: Date, delta: number): Date =>
+      isBS ? bsMonthShiftGreg(date, delta) : new Date(date.getFullYear(), date.getMonth() + delta, 15),
+
+    /** Are two Gregorian dates in the same display month (BS or Gregorian)? */
+    isSameDisplayMonth: (a: Date, b: Date): boolean =>
+      isBS ? isSameBSMonth(a, b) : gregIsSameMonth(a, b),
   }
 }

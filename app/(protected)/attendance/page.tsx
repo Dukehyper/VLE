@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { todayISO } from '@/lib/utils'
 import { useDateFormat } from '@/lib/hooks/useDateFormat'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, isSameMonth } from 'date-fns'
+import { format, eachDayOfInterval, startOfWeek, endOfWeek } from 'date-fns'
 import { X, Plus, ChevronLeft, ChevronRight, Clock, Edit2, Check } from 'lucide-react'
 
 interface AttendanceRecord {
@@ -35,7 +35,7 @@ const DAY_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
 const EVENT_COLORS = ['#6C5DD3', '#4ade80', '#f59e0b', '#f87171', '#60a5fa', '#e879f9']
 
 export default function AttendancePage() {
-  const { fmtDayNum, fmtCalHeader, fmtDate, isBS } = useDateFormat()
+  const { fmtDayNum, fmtCalHeader, fmtDate, isBS, monthStart, monthEnd, monthShift, isSameDisplayMonth } = useDateFormat()
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [today, setToday] = useState<AttendanceRecord | null>(null)
@@ -68,8 +68,8 @@ export default function AttendancePage() {
     const { data: { session } } = await supabase.auth.getSession()
     const user = session?.user
     if (!user) return
-    const mStart = format(startOfMonth(viewMonth), 'yyyy-MM-dd')
-    const mEnd = format(endOfMonth(viewMonth), 'yyyy-MM-dd')
+    const mStart = format(monthStart(viewMonth), 'yyyy-MM-dd')
+    const mEnd = format(monthEnd(viewMonth), 'yyyy-MM-dd')
 
     const [attRes, evtRes] = await Promise.all([
       supabase.from('attendance').select('*').eq('user_id', user.id).gte('date', mStart).lte('date', mEnd),
@@ -159,11 +159,11 @@ export default function AttendancePage() {
     setShowClockEdit(false); load()
   }
 
-  // Calendar
-  const monthStart = startOfMonth(viewMonth)
-  const monthEnd = endOfMonth(viewMonth)
-  const calStart = startOfWeek(monthStart, { weekStartsOn: 1 })
-  const calEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
+  // Calendar — BS or Gregorian month boundaries
+  const mStart = monthStart(viewMonth)
+  const mEnd = monthEnd(viewMonth)
+  const calStart = startOfWeek(mStart, { weekStartsOn: 1 })
+  const calEnd = endOfWeek(mEnd, { weekStartsOn: 1 })
   const calDays = eachDayOfInterval({ start: calStart, end: calEnd })
 
   function getRecord(ds: string) { return records.find(r => r.date === ds) }
@@ -304,11 +304,11 @@ export default function AttendancePage() {
 
       {/* Month navigator */}
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
+        <button onClick={() => setViewMonth(m => monthShift(m, -1))} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
           <ChevronLeft size={16} />
         </button>
         <span className="text-sm font-bold">{fmtCalHeader(viewMonth)}</span>
-        <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
+        <button onClick={() => setViewMonth(m => monthShift(m, 1))} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
           <ChevronRight size={16} />
         </button>
       </div>
@@ -321,7 +321,7 @@ export default function AttendancePage() {
         <div className="grid grid-cols-7 gap-1">
           {calDays.map(d => {
             const ds = format(d, 'yyyy-MM-dd')
-            const inMonth = isSameMonth(d, viewMonth)
+            const inMonth = isSameDisplayMonth(d, viewMonth)
             const isToday = ds === todayStr
             const dayEvts = getDayEvents(ds)
             const isSelected = ds === selectedDay

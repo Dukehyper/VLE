@@ -8,7 +8,7 @@ import { formatMoney, getGreeting, todayISO } from '@/lib/utils'
 import { useDateFormat } from '@/lib/hooks/useDateFormat'
 import { Settings, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Clock, Wallet, UserPlus } from 'lucide-react'
 import Image from 'next/image'
-import { format, startOfMonth, endOfMonth } from 'date-fns'
+import { format } from 'date-fns'
 
 interface MonthData {
   income: number
@@ -29,7 +29,7 @@ interface Pot {
 
 export default function DashboardPage() {
   const { currencySymbol, currency, display_name, avatar_url } = useSettings()
-  const { fmtDate, fmtCalHeader, fmtIncomeMonth } = useDateFormat()
+  const { fmtDate, fmtCalHeader, fmtIncomeMonth, monthStart, monthEnd, monthShift, isSameDisplayMonth } = useDateFormat()
   const [clockedIn, setClockedIn] = useState(false)
   const [clockLoading, setClockLoading] = useState(false)
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([])
@@ -45,8 +45,10 @@ export default function DashboardPage() {
     const user = session?.user
     if (!user) return
 
-    const monthStart = format(startOfMonth(viewMonth), 'yyyy-MM-dd')
-    const monthEnd = format(endOfMonth(viewMonth), 'yyyy-MM-dd')
+    const mStartDate = monthStart(viewMonth)
+    const mEndDate = monthEnd(viewMonth)
+    const mStart = format(mStartDate, 'yyyy-MM-dd')
+    const mEnd = format(mEndDate, 'yyyy-MM-dd')
     const vm = viewMonth
 
     const [allIncome, allExpenses, allPots, mIncome, mExpenses, mAttendance, mPatients, todayAtt] = await Promise.all([
@@ -54,9 +56,9 @@ export default function DashboardPage() {
       supabase.from('expenses').select('id, amount, description, source, date').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('saving_pots').select('*').eq('user_id', user.id),
       supabase.from('income_entries').select('salary_amount, home_visits_amount').eq('user_id', user.id).eq('month', vm.getMonth() + 1).eq('year', vm.getFullYear()),
-      supabase.from('expenses').select('amount').eq('user_id', user.id).gte('date', monthStart).lte('date', monthEnd),
-      supabase.from('attendance').select('status, clocked_in_at, clocked_out_at').eq('user_id', user.id).gte('date', monthStart).lte('date', monthEnd),
-      supabase.from('patient_visits').select('count').eq('user_id', user.id).gte('date', monthStart).lte('date', monthEnd),
+      supabase.from('expenses').select('amount').eq('user_id', user.id).gte('date', mStart).lte('date', mEnd),
+      supabase.from('attendance').select('status, clocked_in_at, clocked_out_at').eq('user_id', user.id).gte('date', mStart).lte('date', mEnd),
+      supabase.from('patient_visits').select('count').eq('user_id', user.id).gte('date', mStart).lte('date', mEnd),
       supabase.from('attendance').select('clocked_in_at, clocked_out_at, status').eq('user_id', user.id).eq('date', todayISO()).single(),
     ])
 
@@ -104,7 +106,7 @@ export default function DashboardPage() {
     load()
   }
 
-  const isCurrentMonth = viewMonth.getMonth() === new Date().getMonth() && viewMonth.getFullYear() === new Date().getFullYear()
+  const isCurrentMonth = isSameDisplayMonth(viewMonth, new Date())
   const net = monthData.income - monthData.expenses
   const skel = (w: string, h = 'h-4') => <div className={`skeleton ${w} ${h}`} />
 
@@ -172,14 +174,14 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-semibold text-white/60">Monthly Overview</h2>
         <div className="flex items-center gap-2">
-          <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
+          <button onClick={() => setViewMonth(m => monthShift(m, -1))} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
             <ChevronLeft size={14} />
           </button>
           <span className="text-xs font-semibold min-w-[80px] text-center">
             {fmtCalHeader(viewMonth)}
           </span>
           <button
-            onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))}
+            onClick={() => setViewMonth(m => monthShift(m, 1))}
             disabled={isCurrentMonth}
             className="w-7 h-7 rounded-lg flex items-center justify-center disabled:opacity-30"
             style={{ background: 'rgba(255,255,255,0.07)' }}

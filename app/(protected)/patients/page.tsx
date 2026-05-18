@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { todayISO, formatDate } from '@/lib/utils'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns'
+import { format, eachDayOfInterval } from 'date-fns'
 import { Plus, Minus, UserPlus, Edit2, Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useDateFormat } from '@/lib/hooks/useDateFormat'
 
@@ -31,15 +31,15 @@ export default function PatientsPage() {
   const [editSaving, setEditSaving] = useState(false)
 
   const todayStr = todayISO()
-  const { fmtDate, fmtDayNum, fmtCalHeader } = useDateFormat()
+  const { fmtDate, fmtDayNum, fmtCalHeader, monthStart, monthEnd, monthShift, isSameDisplayMonth } = useDateFormat()
 
   const load = useCallback(async () => {
     const supabase = createClient()
     const { data: { session } } = await supabase.auth.getSession()
     const user = session?.user
     if (!user) return
-    const mStart = format(startOfMonth(viewMonth), 'yyyy-MM-dd')
-    const mEnd = format(endOfMonth(viewMonth), 'yyyy-MM-dd')
+    const mStart = format(monthStart(viewMonth), 'yyyy-MM-dd')
+    const mEnd = format(monthEnd(viewMonth), 'yyyy-MM-dd')
     const { data } = await supabase.from('patient_visits').select('*').eq('user_id', user.id).gte('date', mStart).lte('date', mEnd).order('date', { ascending: false })
     setVisits(data ?? [])
     setLoading(false)
@@ -92,11 +92,13 @@ export default function PatientsPage() {
   }
 
   const monthTotal = visits.reduce((s, v) => s + v.count, 0)
-  const isCurrentMonth = viewMonth.getMonth() === new Date().getMonth() && viewMonth.getFullYear() === new Date().getFullYear()
+  const isCurrentMonth = isSameDisplayMonth(viewMonth, new Date())
 
-  // Calendar
-  const calDays = eachDayOfInterval({ start: startOfMonth(viewMonth), end: endOfMonth(viewMonth) })
-  const firstDow = (startOfMonth(viewMonth).getDay() + 6) % 7
+  // Calendar — BS or Gregorian month boundaries
+  const mStartDate = monthStart(viewMonth)
+  const mEndDate = monthEnd(viewMonth)
+  const calDays = eachDayOfInterval({ start: mStartDate, end: mEndDate })
+  const firstDow = (mStartDate.getDay() + 6) % 7
   function countForDay(ds: string) { return visits.find(v => v.date === ds)?.count ?? 0 }
 
   return (
@@ -167,11 +169,11 @@ export default function PatientsPage() {
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1))} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
+          <button onClick={() => setViewMonth(m => monthShift(m, -1))} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.07)' }}>
             <ChevronLeft size={13} />
           </button>
           <span className="text-xs font-semibold">{fmtCalHeader(viewMonth)}</span>
-          <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1))} disabled={isCurrentMonth} className="w-7 h-7 rounded-lg flex items-center justify-center disabled:opacity-30" style={{ background: 'rgba(255,255,255,0.07)' }}>
+          <button onClick={() => setViewMonth(m => monthShift(m, 1))} disabled={isCurrentMonth} className="w-7 h-7 rounded-lg flex items-center justify-center disabled:opacity-30" style={{ background: 'rgba(255,255,255,0.07)' }}>
             <ChevronRight size={13} />
           </button>
         </div>
